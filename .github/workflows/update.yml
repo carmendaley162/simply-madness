@@ -2,8 +2,10 @@ name: Update Schedule
 
 on:
   schedule:
-    - cron: '0 */2 * * *'  # every 2 hours
-  workflow_dispatch:        # lets you run it manually from GitHub
+    - cron: '*/15 0-4,14-23 18-23 3 *'  # Mar 18-23
+    - cron: '*/15 0-4,14-23 27-30 3 *'  # Mar 27-30
+    - cron: '*/15 0-4,14-23 3,5 4 *'    # Apr 3 & 5
+  workflow_dispatch:
 
 jobs:
   update:
