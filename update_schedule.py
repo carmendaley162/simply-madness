@@ -833,7 +833,9 @@ def main():
 
     print("\n[3] Building fresh HTML file...")
     game_data = "".join(entries)
-    ts = datetime.now().strftime("%b %d, %I:%M %p").lstrip("0")
+    from datetime import timezone, timedelta
+    et_now = datetime.now(timezone.utc) - timedelta(hours=4)
+    ts = et_now.strftime("%b %d, %I:%M %p").lstrip("0")
     html = HTML_TEMPLATE.replace("%%GAME_DATA%%", game_data)
     html = html.replace("%%LAST_UPDATED%%", ts)
     with open(HTML_FILE, "w", encoding="utf-8") as f:
