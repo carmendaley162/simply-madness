@@ -1,12 +1,13 @@
 name: Update Schedule
 
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: '*/15 0-4,14-23 18-23 3 *'  # Mar 18-23
     - cron: '*/15 0-4,14-23 27-30 3 *'  # Mar 27-30
     - cron: '*/15 0-4,14-23 3,5 4 *'    # Apr 3 & 5
   workflow_dispatch:
-
 jobs:
   update:
     runs-on: ubuntu-latest
