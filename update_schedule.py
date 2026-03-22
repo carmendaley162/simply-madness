@@ -134,7 +134,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .bar-team.loser { color: var(--text3); }
     .team-logo { width: 10px; height: 10px; }
     .bar-score-line { font-size: 7px; }
-    .bar-venue { display: none; }
+    .bar-venue { font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text3); margin-top: 1px; }
   .bar-link { font-size: 7px; color: var(--text3); margin-top: auto; padding-top: 2px; text-align: right; opacity: 0.65; }
   .game-bar:hover .bar-link, .game-bar:active .bar-link { opacity: 1; color: #F47B20; }
   .now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--red); opacity: 0.8; z-index: 10; pointer-events: none; }
