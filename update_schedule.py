@@ -134,7 +134,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .bar-team.loser { color: var(--text3); }
     .team-logo { width: 10px; height: 10px; }
     .bar-score-line { font-size: 7px; }
-    .bar-venue { display: none; }
+    .bar-venue { font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text3); margin-top: 1px; }
   .bar-link { font-size: 7px; color: var(--text3); margin-top: auto; padding-top: 2px; text-align: right; opacity: 0.65; }
   .game-bar:hover .bar-link, .game-bar:active .bar-link { opacity: 1; color: #F47B20; }
   .now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--red); opacity: 0.8; z-index: 10; pointer-events: none; }
@@ -178,6 +178,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="guide-item"><span class="guide-icon">✨</span><div><strong>Cinderella</strong> - sparkle wand next to teams that reached the Sweet 16 as a #10 seed or lower.</div></div>
     <div class="guide-item"><span class="guide-icon">🫧</span><div><strong>Bubble team</strong> - blue bubbles next to teams that had to win a First Four game just to make the tournament.</div></div>
         <button class="guide-close" onclick="document.getElementById('guideOverlay').classList.remove('open')">Got it!</button>
+        <p style="font-size:9px;color:var(--text3);text-align:center;margin-top:10px;">data updated %%LAST_UPDATED%% ET</p>
   </div>
 </div>
 <div id="gridContainer"></div>
@@ -236,7 +237,7 @@ function isBubbleForDay(teamName,day){
   return bubbleTeams.has(teamName.replace(/^[(][0-9]+[)] */,""))&&!FIRST_FOUR_DAYS.has(day);
 }
 
-function toMin(t){if(!t||t==="TBD"||t==="12:00 AM")return null;const[hm,ap]=t.split(" ");let[h,m]=hm.split(":").map(Number);if(ap==="PM"&&h!==12)h+=12;if(ap==="AM"&&h===12)h=0;return h*60+m;}
+// toMin removed — use toLocalMin everywhere for consistency
 function buildTabs(){const c=document.getElementById("dayTabs");days.forEach(d=>{const b=document.createElement("button");b.className="day-btn"+(d===activeDay?" active":"")+(futureDays.has(d)?" future":"")+(d===todayDay?" today":"");b.innerHTML=d+"<br><span style='font-size:9px;opacity:0.7'>"+(roundMap[d]||"")+"</span>";b.onclick=()=>{activeDay=d;document.querySelectorAll(".day-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");render();};c.appendChild(b);});}
   const ROUND_INFO={
     "Sun Mar 22":{total:8,partner:"Mon Mar 23",partnerShort:"the 23rd",round:"Second Round"},
@@ -264,11 +265,11 @@ function render(){
     const partnerDay=roundInfo.partner;
     // Count games on THIS day without times (not pooled across partner day)
     const todayGames=G.filter(g=>g.day===activeDay);
-    const todayWithTime=todayGames.filter(g=>toMin(g.time)!==null).length;
+    const todayWithTime=todayGames.filter(g=>toLocalMin(g.time)!==null).length;
     const todayTBD=todayGames.length-todayWithTime;
     // Also track partner day for context
     const partnerGames=partnerDay?G.filter(g=>g.day===partnerDay):[];
-    const partnerWithTime=partnerGames.filter(g=>toMin(g.time)!==null).length;
+    const partnerWithTime=partnerGames.filter(g=>toLocalMin(g.time)!==null).length;
     const partnerTBD=partnerGames.length-partnerWithTime;
     const totalTBD=todayTBD+partnerTBD;
     if(todayTBD>0){
@@ -286,7 +287,7 @@ function render(){
       // Show known matchups with no times yet
       const _noTimeGames=G.filter(g=>{
         const onThisRound=(g.day===activeDay); // only show matchups for THIS day
-        const noTime=toMin(g.time)===null;
+        const noTime=toLocalMin(g.time)===null;
         const someTeamKnown=g.away!=="TBD"||g.home!=="TBD";
         return onThisRound&&noTime&&someTeamKnown;
       });
@@ -443,7 +444,7 @@ const cinderellaBanner=document.getElementById("cinderellaBanner");
     const widthPct=1/netsUsed.length*100;
     html+="<div style='position:absolute;left:"+leftPct+"%;width:"+widthPct+"%;top:0;bottom:0;"+(ni<netsUsed.length-1?"border-right:1px solid var(--border)":"")+"'>";
     netGames.forEach(g=>{
-      const s=toMin(g.time);
+      const s=toLocalMin(g.time);
       const espnUrl=g.gameId?"https://www.espn.com/womens-college-basketball/game/_/gameId/"+g.gameId:"";
       if(!s)return;
       const yPct=(s-dayStart)/totalMin*100;
@@ -475,17 +476,15 @@ const cinderellaBanner=document.getElementById("cinderellaBanner");
       html+="<div class='bar-team "+homeCls+"'>"+(homeLogoHtml)+(window.innerWidth<500?(g.homeAbbr||g.homeShort||g.home):g.home)+homeWandHtml+homeBubbleHtml+"</div>";
       if(isFinal&&g.ascore!=null)html+="<div class='bar-score-line'>"+g.ascore+" \u2013 "+g.hscore+"</div>";
       if(isUpset)html+="<div class='upset-label'>UNDERDOG UPSET</div>";
-      if(!_isET&&g.time&&g.time!=='TBD'&&g.time!=='12:00 AM'){
+      if(g.time&&g.time!=='TBD'&&g.time!=='12:00 AM'){
         const lt=toLocalTime(g.time);
-        if(lt!==g.time)html+="<div style='font-size:7px;color:var(--text3);margin-top:1px'>"+lt+" local</div>";
+        if(lt){const _tDisp=lt.replace(':00','');html+="<div style='font-size:7px;color:var(--text3);margin-top:1px'>"+_tDisp+" "+(_isUS?_tzInfo.abbr:'ET')+" start</div>";}
       }
-      const _dispTime=_isET?g.time:toLocalTime(g.time);
-      const _tzAbbr=_isUS?_tzInfo.abbr:'ET';
-      if(_dispTime&&_dispTime!=='TBD'&&_dispTime!=='12:00 AM'){
-        const _tDisp=_dispTime.replace(':00','');
-        html+="<div style='font-size:7px;color:var(--text3);margin-top:1px'>"+_tDisp+" "+_tzAbbr+" start</div>";
+      if(g.venue){
+        const vparts=g.venue.split(', ');
+        const vCity=vparts.slice(1).join(', ');
+        html+="<div class='bar-venue'>"+(vCity||g.venue)+"</div>";
       }
-      if(g.venue)html+="<div class='bar-venue'>"+g.venue+"</div>";
       if(espnUrl)html+="<div class='bar-link'>Open game page &#8599;</div>";
       html+="</div>";
       if(espnUrl)html+="</a>";
@@ -566,7 +565,8 @@ const cinderellaBanner=document.getElementById("cinderellaBanner");
     const local = toLocalTime(etStr);
     if (!local || local === 'TBD' || local === '12:00 AM') return null;
     const [hm, ap] = local.split(' ');
-    let [h, m] = hm.split(':').map(Number);
+    const parts = hm.split(':');
+    let h = Number(parts[0]), m = parts.length > 1 ? Number(parts[1]) : 0;
     if (ap === 'PM' && h !== 12) h += 12;
     if (ap === 'AM' && h === 12) h = 0;
     return h * 60 + m;
@@ -833,7 +833,9 @@ def main():
 
     print("\n[3] Building fresh HTML file...")
     game_data = "".join(entries)
-    ts = datetime.now().strftime("%b %d, %I:%M %p").lstrip("0")
+    from datetime import timezone, timedelta
+    et_now = datetime.now(timezone.utc) - timedelta(hours=4)
+    ts = et_now.strftime("%b %d, %I:%M %p").lstrip("0")
     html = HTML_TEMPLATE.replace("%%GAME_DATA%%", game_data)
     html = html.replace("%%LAST_UPDATED%%", ts)
     with open(HTML_FILE, "w", encoding="utf-8") as f:
