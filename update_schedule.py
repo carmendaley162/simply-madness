@@ -218,7 +218,7 @@ function isCinderella(teamName){
 }
 const now=new Date();
 const todayStr=now.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}).replace(",","");
-const todayDay=days.find(d=>d===todayStr)||days[0];
+const _todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());const todayDay=days.find(d=>d===todayStr)||days.find(d=>{const p=d.match(/(\w+) (\d+)/);if(!p)return false;const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};const dd=new Date(now.getFullYear(),months[p[1]],parseInt(p[2]));return dd>=_todayDate;})||days[days.length-1];
 let activeDay=todayDay;
 const FIRST_FOUR_DAYS=new Set(["Wed Mar 18","Thu Mar 19"]);
 function getBubbleTeams(){
@@ -256,7 +256,7 @@ function render(){
   const container=document.getElementById("gridContainer");
   const note=document.getElementById("overlapNote");
   note.style.display="none";
-  document.getElementById("stickyDayLabel").textContent="Viewing "+(activeDay===todayDay?"TODAY":activeDay);
+  document.getElementById("stickyDayLabel").textContent="Viewing "+(activeDay===todayDay?(days.includes(todayStr)?"TODAY":"NEXT"):activeDay);
   document.getElementById("stickyRoundLabel").textContent=roundMap[activeDay]||"";
 
   const tbdBanner=document.getElementById("tbdBanner");
