@@ -218,7 +218,7 @@ function isCinderella(teamName){
 }
 const now=new Date();
 const todayStr=now.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}).replace(",","");
-const todayDay=days.find(d=>d===todayStr)||days[0];
+const _todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());const todayDay=days.find(d=>d===todayStr)||days.find(d=>{const p=d.match(/(\w+) (\d+)/);if(!p)return false;const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};const dd=new Date(now.getFullYear(),months[p[1]],parseInt(p[2]));return dd>=_todayDate;})||days[days.length-1];
 let activeDay=todayDay;
 const FIRST_FOUR_DAYS=new Set(["Wed Mar 18","Thu Mar 19"]);
 function getBubbleTeams(){
@@ -246,8 +246,8 @@ function buildTabs(){const c=document.getElementById("dayTabs");days.forEach(d=>
     "Sat Mar 28":{total:4,partner:"Fri Mar 27",partnerShort:"the 27th",round:"Sweet 16"},
     "Sun Mar 29":{total:2,partner:null,partnerShort:null,round:"Elite Eight"},
     "Mon Mar 30":{total:2,partner:null,partnerShort:null,round:"Elite Eight"},
-    "Fri Apr 3":{total:2,partner:null,partnerShort:null,round:"Final Four"},
-    "Sun Apr 5":{total:1,partner:null,partnerShort:null,round:"Championship"},
+    "Fri Apr 3":{total:2,partner:null,partnerShort:null,round:"Final Four",staticBlurb:"2 Final Four semifinal games at Mortgage Matchup Center in Phoenix. First tip-off at 7 PM ET on ESPN — second semifinal starts ~30 min after the first game ends."},
+    "Sun Apr 5":{total:1,partner:null,partnerShort:null,round:"Championship",staticBlurb:"NCAA Championship game at Mortgage Matchup Center in Phoenix. Tip-off at 3:30 PM ET on ABC."},
   };
 function render(){
   const games=G.filter(g=>g.day===activeDay);
@@ -256,7 +256,7 @@ function render(){
   const container=document.getElementById("gridContainer");
   const note=document.getElementById("overlapNote");
   note.style.display="none";
-  document.getElementById("stickyDayLabel").textContent="Viewing "+(activeDay===todayDay?"TODAY":activeDay);
+  document.getElementById("stickyDayLabel").textContent="Viewing "+(activeDay===todayDay?(days.includes(todayStr)?"TODAY":"NEXT"):activeDay);
   document.getElementById("stickyRoundLabel").textContent=roundMap[activeDay]||"";
 
   const tbdBanner=document.getElementById("tbdBanner");
@@ -272,10 +272,15 @@ function render(){
     const partnerWithTime=partnerGames.filter(g=>toLocalMin(g.time)!==null).length;
     const partnerTBD=partnerGames.length-partnerWithTime;
     const totalTBD=todayTBD+partnerTBD;
-    if(todayTBD>0){
+    if(roundInfo.staticBlurb){
+      tbdBanner.style.display="block";
+      tbdBanner.innerHTML=roundInfo.staticBlurb;
+    } else if(todayTBD>0){
       tbdBanner.style.display="block";
       let blurb="";
-      if(todayWithTime===0&&partnerWithTime===0){
+      if(roundInfo.blurb){
+        blurb=roundInfo.blurb;
+      } else if(todayWithTime===0&&partnerWithTime===0){
         if(partnerDay){
           blurb=roundInfo.total+" "+roundInfo.round+" games split between "+activeDay+" and "+roundInfo.partnerShort+" - which ones air on which day is TBD!";
         } else {
@@ -338,7 +343,8 @@ function render(){
   }
   const scheduledGames=realGames.filter(g=>toLocalMin(g.time)!==null);
   if(!scheduledGames.length){
-    container.innerHTML="<div class='future-note' style='padding:20px 0'>Game times not yet announced — check back soon.</div>";
+    const _emptyMsg=roundInfo&&roundInfo.staticBlurb?"Matchups TBD — schedule details above.":"Game times not yet announced — check back soon.";
+    container.innerHTML="<div class='future-note' style='padding:20px 0'>"+_emptyMsg+"</div>";
     return;
   }
   const netsUsed=NETS.filter(n=>realGames.some(g=>g.net===n));
@@ -412,7 +418,6 @@ const cinderellaBanner=document.getElementById("cinderellaBanner");
   const ticks=[];
   for(let t=dayStart;t<=dayEnd;t+=30)ticks.push(t);
   const now=new Date();
-  const todayStr=now.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}).replace(",","");
   const isToday=activeDay===todayStr;
   const nowMin=now.getHours()*60+now.getMinutes();
   const showNow=isToday&&nowMin>=dayStart&&nowMin<=dayEnd;
