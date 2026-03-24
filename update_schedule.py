@@ -246,8 +246,8 @@ function buildTabs(){const c=document.getElementById("dayTabs");days.forEach(d=>
     "Sat Mar 28":{total:4,partner:"Fri Mar 27",partnerShort:"the 27th",round:"Sweet 16"},
     "Sun Mar 29":{total:2,partner:null,partnerShort:null,round:"Elite Eight"},
     "Mon Mar 30":{total:2,partner:null,partnerShort:null,round:"Elite Eight"},
-    "Fri Apr 3":{total:2,partner:null,partnerShort:null,round:"Final Four"},
-    "Sun Apr 5":{total:1,partner:null,partnerShort:null,round:"Championship"},
+    "Fri Apr 3":{total:2,partner:null,partnerShort:null,round:"Final Four",staticBlurb:"2 Final Four semifinal games at Mortgage Matchup Center in Phoenix. First tip-off at 7 PM ET on ESPN — second semifinal starts ~30 min after the first game ends."},
+    "Sun Apr 5":{total:1,partner:null,partnerShort:null,round:"Championship",staticBlurb:"NCAA Championship game at Mortgage Matchup Center in Phoenix. Tip-off at 3:30 PM ET on ABC."},
   };
 function render(){
   const games=G.filter(g=>g.day===activeDay);
@@ -272,10 +272,15 @@ function render(){
     const partnerWithTime=partnerGames.filter(g=>toLocalMin(g.time)!==null).length;
     const partnerTBD=partnerGames.length-partnerWithTime;
     const totalTBD=todayTBD+partnerTBD;
-    if(todayTBD>0){
+    if(roundInfo.staticBlurb){
+      tbdBanner.style.display="block";
+      tbdBanner.innerHTML=roundInfo.staticBlurb;
+    } else if(todayTBD>0){
       tbdBanner.style.display="block";
       let blurb="";
-      if(todayWithTime===0&&partnerWithTime===0){
+      if(roundInfo.blurb){
+        blurb=roundInfo.blurb;
+      } else if(todayWithTime===0&&partnerWithTime===0){
         if(partnerDay){
           blurb=roundInfo.total+" "+roundInfo.round+" games split between "+activeDay+" and "+roundInfo.partnerShort+" - which ones air on which day is TBD!";
         } else {
@@ -338,7 +343,8 @@ function render(){
   }
   const scheduledGames=realGames.filter(g=>toLocalMin(g.time)!==null);
   if(!scheduledGames.length){
-    container.innerHTML="<div class='future-note' style='padding:20px 0'>Game times not yet announced — check back soon.</div>";
+    const _emptyMsg=roundInfo&&roundInfo.staticBlurb?"Matchups TBD — schedule details above.":"Game times not yet announced — check back soon.";
+    container.innerHTML="<div class='future-note' style='padding:20px 0'>"+_emptyMsg+"</div>";
     return;
   }
   const netsUsed=NETS.filter(n=>realGames.some(g=>g.net===n));
@@ -412,7 +418,6 @@ const cinderellaBanner=document.getElementById("cinderellaBanner");
   const ticks=[];
   for(let t=dayStart;t<=dayEnd;t+=30)ticks.push(t);
   const now=new Date();
-  const todayStr=now.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}).replace(",","");
   const isToday=activeDay===todayStr;
   const nowMin=now.getHours()*60+now.getMinutes();
   const showNow=isToday&&nowMin>=dayStart&&nowMin<=dayEnd;
